@@ -8,6 +8,7 @@ using System;
 using System.Data.SQLite;
 using MySql.Data.MySqlClient;
 using Npgsql;
+using IBM.Data.DB2.Core;
 
 namespace Dapper.SimpleCRUDTests
 {
@@ -101,6 +102,23 @@ namespace Dapper.SimpleCRUDTests
         public int Population { get; set; }
     }
 
+    public interface INameColumn
+    {
+        string Name { get; set; }
+    }
+
+    [Table("City")]
+    public class CityWithIName : City, INameColumn
+    {
+
+    }
+
+    [Table("Users")]
+    public class UserWithIName : User, INameColumn
+    {
+
+    }
+
     public class GUIDTest
     {
         [Key]
@@ -190,9 +208,14 @@ namespace Dapper.SimpleCRUDTests
                 connection = new MySqlConnection(String.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};", "localhost", "3306", "root", "admin", "testdb"));
                 SimpleCRUD.SetDialect(SimpleCRUD.Dialect.MySQL);
             }
+            else if (_dbtype == SimpleCRUD.Dialect.DB2)
+            {
+                connection = new DB2Connection(string.Format("Server={0};UID={1};PWD={2};Database={3};", "localhost:50000", "db2admin", "db2admin", "testdb"));
+                SimpleCRUD.SetDialect(SimpleCRUD.Dialect.DB2);
+            }
             else
             {
-                connection = new SqlConnection(@"Data Source = .\sqlexpress;Initial Catalog=DapperSimpleCrudTestDb;Integrated Security=True;MultipleActiveResultSets=true;");
+                connection = new SqlConnection($@"Data Source={Program.SQLServerName};Initial Catalog=DapperSimpleCrudTestDb;Integrated Security=True;MultipleActiveResultSets=true;");
                 SimpleCRUD.SetDialect(SimpleCRUD.Dialect.SQLServer);
             }
 
@@ -214,7 +237,7 @@ namespace Dapper.SimpleCRUDTests
             }
         }
 
-        public void TestMassInsert() 
+        public void TestMassInsert()
         {
             //With cached strinb builder, this tests runs 2.5X faster (From 400ms to 180ms)
             using (var connection = GetOpenConnection())
@@ -798,14 +821,13 @@ namespace Dapper.SimpleCRUDTests
             }
         }
 
-        public void TestDeleteByIdAsync()
+        public async void TestDeleteByIdAsync()
         {
             using (var connection = GetOpenConnection())
             {
                 var id = connection.Insert(new User { Name = "UserAsyncDelete", Age = 10 });
-                connection.DeleteAsync<User>(id);
+                await connection.DeleteAsync<User>(id);
                 //tiny wait to let the delete happen
-                System.Threading.Thread.Sleep(300);
                 connection.Get<User>(id).IsNull();
             }
         }
@@ -1289,6 +1311,128 @@ namespace Dapper.SimpleCRUDTests
                 list.Count().IsEqualTo(1);
 
                 connection.Execute("Delete from Users");
+            }
+        }
+
+        public void TestInsertUsingInterface()
+        {
+            using (var connection = GetOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                INameColumn newUser = new UserWithIName
+                {
+                    Age = 40,
+                    Name = "Jonathan Larouche",
+                    ScheduledDayOff = DayOfWeek.Sunday,
+                    CreatedDate = new DateTime(2000, 1, 1)
+                };
+
+                connection.Insert(newUser, transaction);
+
+                INameColumn newCity = new CityWithIName
+                {
+                    Name = "Montreal",
+                    Population = 5675
+                };
+
+                connection.Insert<string, INameColumn>(newCity, transaction);
+
+                var user = connection.GetList<UserWithIName>(new { Name = "Jonathan Larouche" }, transaction).FirstOrDefault();
+                user.Age.IsEqualTo(40);
+                var city = connection.GetList<CityWithIName>(new { Name = "Montreal" }, transaction).FirstOrDefault();
+                city.Population.IsEqualTo(5675);
+
+            }
+        }
+
+        public async void TestInsertAsyncUsingInterface()
+        {
+            using (var connection = GetOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                INameColumn newUser = new UserWithIName
+                {
+                    Age = 40,
+                    Name = "Jonathan Larouche",
+                    ScheduledDayOff = DayOfWeek.Sunday,
+                    CreatedDate = new DateTime(2000, 1, 1)
+                };
+
+                await connection.InsertAsync(newUser, transaction);
+                
+                var user = connection.GetList<UserWithIName>(new { Name = "Jonathan Larouche" }, transaction).FirstOrDefault();
+                user.Age.IsEqualTo(40);
+
+            }
+        }
+
+        public void TestUpdateUsingInterface()
+        {
+            using (var connection = GetOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                INameColumn newUser = new UserWithIName
+                {
+                    Age = 40,
+                    Name = "Jonathan Larouche",
+                    ScheduledDayOff = DayOfWeek.Sunday,
+                    CreatedDate = new DateTime(2000, 1, 1)
+                };
+
+                ((UserWithIName)newUser).Id = connection.Insert(newUser, transaction).Value;
+                ((UserWithIName)newUser).Age = 41;
+                connection.Update(newUser, transaction);
+
+                INameColumn newCity = new CityWithIName
+                {
+                    Name = "Montreal",
+                    Population = 5675
+                };
+
+                connection.Insert<string, INameColumn>(newCity, transaction);
+                ((CityWithIName)newCity).Population = 6000;
+                connection.Update(newCity, transaction);
+
+                var user = connection.GetList<UserWithIName>(new { Name = "Jonathan Larouche" }, transaction).FirstOrDefault();
+                user.Age.IsEqualTo(41);
+                var city = connection.GetList<CityWithIName>(new { Name = "Montreal" }, transaction).FirstOrDefault();
+                city.Population.IsEqualTo(6000);
+
+            }
+        }
+
+        public async void TestUpdateAsyncUsingInterface()
+        {
+            using (var connection = GetOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                INameColumn newUser = new UserWithIName
+                {
+                    Age = 40,
+                    Name = "Jonathan Larouche",
+                    ScheduledDayOff = DayOfWeek.Sunday,
+                    CreatedDate = new DateTime(2000, 1, 1)
+                };
+
+                ((UserWithIName)newUser).Id = connection.Insert(newUser, transaction).Value;
+                ((UserWithIName)newUser).Age = 41;
+                await connection.UpdateAsync(newUser, transaction);
+
+                INameColumn newCity = new CityWithIName
+                {
+                    Name = "Montreal",
+                    Population = 5675
+                };
+
+                connection.Insert<string, INameColumn>(newCity, transaction);
+                ((CityWithIName)newCity).Population = 6000;
+                await connection.UpdateAsync(newCity, transaction);
+
+                var user = connection.GetList<UserWithIName>(new { Name = "Jonathan Larouche" }, transaction).FirstOrDefault();
+                user.Age.IsEqualTo(41);
+                var city = connection.GetList<CityWithIName>(new { Name = "Montreal" }, transaction).FirstOrDefault();
+                city.Population.IsEqualTo(6000);
+
             }
         }
 

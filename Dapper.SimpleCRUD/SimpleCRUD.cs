@@ -97,6 +97,12 @@ namespace Dapper
                     _getIdentitySql = "";
                     _getPagedListSql = "SELECT * FROM (SELECT ROWNUM PagedNUMBER, u.* FROM(SELECT {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy}) u) WHERE PagedNUMBER BETWEEN (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
                     break;
+                case Dialect.DB2:
+                    _dialect = Dialect.DB2;
+                    _encapsulation = "\"{0}\"";
+                    _getIdentitySql = string.Format("SELECT CAST(IDENTITY_VAL_LOCAL() AS DEC(31,0)) AS \"id\" FROM SYSIBM.SYSDUMMY1");
+                    _getPagedListSql = "Select * from (Select {SelectColumns}, row_number() over(order by {OrderBy}) as PagedNumber from {TableName} {WhereClause} Order By {OrderBy}) as t where t.PagedNumber between (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
+                    break;
                 default:
                     _dialect = Dialect.SQLServer;
                     _encapsulation = "[{0}]";
@@ -350,6 +356,13 @@ namespace Dapper
         /// <returns>The ID (primary key) of the newly inserted record if it is identity using the defined type, otherwise null</returns>
         public static TKey Insert<TKey, TEntity>(this IDbConnection connection, TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
         {
+            if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method : https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
+            {
+                return (TKey)typeof(SimpleCRUD)
+                    .GetMethods().Where(methodInfo=>methodInfo.Name == nameof(Insert) && methodInfo.GetGenericArguments().Count()==2).Single()
+                    .MakeGenericMethod(new Type[] { typeof(TKey), entityToInsert.GetType() })
+                    .Invoke(null, new object[] { connection,entityToInsert,transaction,commandTimeout });
+            }
             var idProps = GetIdProperties(entityToInsert).ToList();
 
             if (!idProps.Any())
@@ -427,6 +440,13 @@ namespace Dapper
         /// <returns>The number of affected records</returns>
         public static int Update<TEntity>(this IDbConnection connection, TEntity entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null)
         {
+            if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
+            {
+                return (int)typeof(SimpleCRUD)
+                    .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
+                    .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
+                    .Invoke(null, new object[] { connection, entityToUpdate, transaction, commandTimeout });
+            }
             var masterSb = new StringBuilder();
             StringBuilderCache(masterSb, $"{typeof(TEntity).FullName}_Update", sb =>
             {
@@ -989,6 +1009,7 @@ namespace Dapper
             SQLite,
             MySQL,
             Oracle,
+            DB2
         }
 
         public interface ITableNameResolver
@@ -1005,7 +1026,16 @@ namespace Dapper
         {
             public virtual string ResolveTableName(Type type)
             {
-                var tableName = Encapsulate(type.Name);
+                string tableName;
+
+                if (GetDialect() == Dialect.DB2.ToString())
+                {
+                    tableName = type.Name;
+                }
+                else
+                {
+                    tableName = Encapsulate(type.Name);
+                }
 
                 var tableattr = type.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(TableAttribute).Name) as dynamic;
                 if (tableattr != null)
@@ -1033,7 +1063,16 @@ namespace Dapper
         {
             public virtual string ResolveColumnName(PropertyInfo propertyInfo)
             {
-                var columnName = Encapsulate(propertyInfo.Name);
+                string columnName;
+
+                if (GetDialect() == Dialect.DB2.ToString())
+                {
+                    columnName = propertyInfo.Name;
+                }
+                else
+                {
+                    columnName = Encapsulate(propertyInfo.Name);
+                }
 
                 var columnattr = propertyInfo.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(ColumnAttribute).Name) as dynamic;
                 if (columnattr != null)
