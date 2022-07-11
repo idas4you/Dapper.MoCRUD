@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.0;net472;</TargetFrameworks>
+    <TargetFrameworks>net5.0;net461</TargetFrameworks>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
     <StartupObject />
@@ -24,11 +24,13 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.78" />
+    <PackageReference Include="Dapper" Version="2.0.123" />
   </ItemGroup>
 
+
+
   <ItemGroup>
-    <ProjectReference Include="..\Dapper.SimpleCRUD\Dapper.SimpleCRUD.csproj" />
+    <ProjectReference Include="..\Dapper.moCRUD\Dapper.MoCRUD.csproj" />
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0'">

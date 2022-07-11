@@ -8,7 +8,7 @@ using IBM.Data.DB2.Core;
 using MySql.Data.MySqlClient;
 using Npgsql;
 
-namespace Dapper.SimpleCRUDTests
+namespace Dapper.MoCRUDTests
 {
     class Program
     {
@@ -45,15 +45,15 @@ namespace Dapper.SimpleCRUDTests
                 connection.Open();
                 try
                 {
-                    connection.Execute(@" DROP DATABASE DapperSimpleCrudTestDb; ");
+                    connection.Execute(@" DROP DATABASE DappermoCRUDTestDb; ");
                 }
                 catch (Exception)
                 { }
 
-                connection.Execute(@" CREATE DATABASE DapperSimpleCrudTestDb; ");
+                connection.Execute(@" CREATE DATABASE DappermoCRUDTestDb; ");
             }
 
-            using (var connection = new SqlConnection($@"Data Source ={SQLServerName};Initial Catalog=DapperSimpleCrudTestDb;Integrated Security=True"))
+            using (var connection = new SqlConnection($@"Data Source ={SQLServerName};Initial Catalog=DappermoCRUDTestDb;Integrated Security=True"))
             {
                 connection.Open();
                 connection.Execute(@" create table Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime DEFAULT(getdate())) ");
@@ -158,7 +158,7 @@ namespace Dapper.SimpleCRUDTests
         private static void RunTests()
         {
             var stopwatch = Stopwatch.StartNew();
-            var sqltester = new Tests(SimpleCRUD.Dialect.SQLServer);
+            var sqltester = new Tests(MoCRUD.Dialect.SQLServer);
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 var testwatch = Stopwatch.StartNew();
@@ -178,7 +178,7 @@ namespace Dapper.SimpleCRUDTests
                 try
                 {
                     //drop any remaining connections, then drop the db.
-                    connection.Execute(@" alter database DapperSimpleCrudTestDb set single_user with rollback immediate; DROP DATABASE DapperSimpleCrudTestDb; ");
+                    connection.Execute(@" alter database DappermoCRUDTestDb set single_user with rollback immediate; DROP DATABASE DappermoCRUDTestDb; ");
                 }
                 catch (Exception)
                 { }
@@ -190,7 +190,7 @@ namespace Dapper.SimpleCRUDTests
         private static void RunTestsPg()
         {
             var stopwatch = Stopwatch.StartNew();
-            var pgtester = new Tests(SimpleCRUD.Dialect.PostgreSQL);
+            var pgtester = new Tests(MoCRUD.Dialect.PostgreSQL);
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 var testwatch = Stopwatch.StartNew();
@@ -208,7 +208,7 @@ namespace Dapper.SimpleCRUDTests
         private static void RunTestsSqLite()
         {
             var stopwatch = Stopwatch.StartNew();
-            var pgtester = new Tests(SimpleCRUD.Dialect.SQLite);
+            var pgtester = new Tests(MoCRUD.Dialect.SQLite);
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 //skip schema tests
@@ -227,7 +227,7 @@ namespace Dapper.SimpleCRUDTests
         private static void RunTestsMySQL()
         {
             var stopwatch = Stopwatch.StartNew();
-            var mysqltester = new Tests(SimpleCRUD.Dialect.MySQL);
+            var mysqltester = new Tests(MoCRUD.Dialect.MySQL);
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 //skip schema tests
@@ -300,7 +300,7 @@ namespace Dapper.SimpleCRUDTests
         private static void RunTestsDB2()
         {
             var stopwatch = Stopwatch.StartNew();
-            var db2tester = new Tests(SimpleCRUD.Dialect.DB2);
+            var db2tester = new Tests(MoCRUD.Dialect.DB2);
             foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 //skip schema tests
