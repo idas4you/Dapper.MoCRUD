@@ -2,8 +2,8 @@ Dapper.MoCRUD - simple CRUD helpers for Dapper
 ========================================
 Features
 --------
-<img  align="right" src="https://raw.githubusercontent.com/ericdc1/Dapper.MoCRUD/master/images/MoCRUD-200x200.png" alt="MoCRUD">
-Dapper.MoCRUD is a [single file](https://github.com/ericdc1/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUD.cs) you can drop in to your project that will extend your IDbConnection interface. (If you want dynamic support, you need an [additional file](https://github.com/ericdc1/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUDAsync.cs).)
+<img  align="right" src="https://raw.githubusercontent.com/idas4you/Dapper.MoCRUD/master/images/MoCRUD-200x200.png" alt="MoCRUD">
+Dapper.MoCRUD is a [single file](https://github.com/ericdc1/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUD.cs) you can drop in to your project that will extend your IDbConnection interface. (If you want dynamic support, you need an [additional file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUDAsync.cs).)
 
 Who wants to write basic read/insert/update/delete statements? 
 
