@@ -1,9 +1,9 @@
-Dapper.SimpleCRUD - simple CRUD helpers for Dapper
+Dapper.MoCRUD - simple CRUD helpers for Dapper
 ========================================
 Features
 --------
-<img  align="right" src="https://raw.githubusercontent.com/ericdc1/Dapper.SimpleCRUD/master/images/SimpleCRUD-200x200.png" alt="SimpleCRUD">
-Dapper.SimpleCRUD is a [single file](https://github.com/ericdc1/Dapper.SimpleCRUD/blob/master/Dapper.SimpleCRUD/SimpleCRUD.cs) you can drop in to your project that will extend your IDbConnection interface. (If you want dynamic support, you need an [additional file](https://github.com/ericdc1/Dapper.SimpleCRUD/blob/master/Dapper.SimpleCRUD/SimpleCRUDAsync.cs).)
+<img  align="right" src="https://raw.githubusercontent.com/idas4you/Dapper.MoCRUD/master/images/MoCRUD-200x200.png" alt="MoCRUD">
+Dapper.MoCRUD is a [single file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUD.cs) you can drop in to your project that will extend your IDbConnection interface. (If you want dynamic support, you need an [additional file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUDAsync.cs).)
 
 Who wants to write basic read/insert/update/delete statements? 
 
@@ -50,9 +50,9 @@ If you need something more complex use Dapper's Query or Execute methods!
 
 Note: all extension methods assume the connection is already open, they will fail if the connection is closed.
 
-Install via NuGet - https://nuget.org/packages/Dapper.SimpleCRUD
+Install via NuGet - https://nuget.org/packages/Dapper.MoCRUD
 
-Check out the model generator [T4 template](https://nuget.org/packages/Dapper.SimpleCRUD.ModelGenerator/) to generate your POCOs. Documentation is at https://github.com/ericdc1/Dapper.SimpleCRUD/wiki/T4-Template
+Check out the model generator [T4 template](https://nuget.org/packages/Dapper.MoCRUD.ModelGenerator/) to generate your POCOs. Documentation is at https://github.com/ericdc1/Dapper.MoCRUD/wiki/T4-Template
 
 Get a single record mapped to a strongly typed object
 ------------------------------------------------------------
@@ -103,7 +103,7 @@ Notes:
 
 - The [Key] attribute can be used from the Dapper namespace or from System.ComponentModel.DataAnnotations
 - The [Table] attribute can be used from the Dapper namespace, System.ComponentModel.DataAnnotations.Schema, or System.Data.Linq.Mapping - By default the database table name will match the model name but it can be overridden with this.
-- The [Column] attribute can be used from the Dapper namespace, System.ComponentModel.DataAnnotations.Schema, or System.Data.Linq.Mapping - By default the column name will match the property name but it can be overridden with this. You can even use the model property names in the where clause anonymous object and SimpleCRUD will generate a proper where clause to match the database based on the column attribute
+- The [Column] attribute can be used from the Dapper namespace, System.ComponentModel.DataAnnotations.Schema, or System.Data.Linq.Mapping - By default the column name will match the property name but it can be overridden with this. You can even use the model property names in the where clause anonymous object and MoCRUD will generate a proper where clause to match the database based on the column attribute
 
 - GUID (uniqueidentifier) primary keys are supported (autopopulates if no value is passed in)
 
@@ -439,7 +439,7 @@ Custom table and column name resolvers
 ---------------------
 You can also change the format of table and column names, first create a class implimenting the ITableNameResolver and/or IColumnNameResolver interfaces
 ```csharp 
-public class CustomResolver : SimpleCRUD.ITableNameResolver, SimpleCRUD.IColumnNameResolver
+public class CustomResolver : MoCRUD.ITableNameResolver, MoCRUD.IColumnNameResolver
 {
     public string ResolveTableName(Type type)
     {
@@ -455,17 +455,17 @@ public class CustomResolver : SimpleCRUD.ITableNameResolver, SimpleCRUD.IColumnN
 then apply the resolvers when intializing your application
 ```csharp 
     var resolver = new CustomResolver();
-    SimpleCRUD.SetTableNameResolver(resolver);
-    SimpleCRUD.SetColumnNameResolver(resolver);
+    MoCRUD.SetTableNameResolver(resolver);
+    MoCRUD.SetColumnNameResolver(resolver);
 ```
 
 Database support
 ---------------------
 * There is an option to change database dialect. Default is Microsoft SQL Server but can be changed to PostgreSQL or MySQL. We dropped SQLite support with the .Net Core release. 
 ```csharp 
-   SimpleCRUD.SetDialect(SimpleCRUD.Dialect.PostgreSQL);
+   MoCRUD.SetDialect(MoCRUD.Dialect.PostgreSQL);
     
-   SimpleCRUD.SetDialect(SimpleCRUD.Dialect.MySQL);
+   MoCRUD.SetDialect(MoCRUD.Dialect.MySQL);
 ```
 
 Attributes
@@ -474,7 +474,7 @@ The following attributes can be applied to properties in your model
 
 [Table("YourTableName")] -  By default the database table name will match the model name but it can be overridden with this.
    
-[Column("YourColumnName"] - By default the column name will match the property name but it can be overridden with this. You can even use the model property names in the where clause anonymous object and SimpleCRUD will generate a proper where clause to match the database based on the column attribute
+[Column("YourColumnName"] - By default the column name will match the property name but it can be overridden with this. You can even use the model property names in the where clause anonymous object and MoCRUD will generate a proper where clause to match the database based on the column attribute
    
 [Key] -By default the Id integer field is considered the primary key and is excluded from insert. The [Key] attribute lets you specify any Int or Guid as the primary key.
    
@@ -495,6 +495,6 @@ The following attributes can be applied to properties in your model
 
 Do you have a comprehensive list of examples?
 ---------------------
-Dapper.SimpleCRUD has a basic test suite in the [test project](https://github.com/ericdc1/dapper.SimpleCRUD/blob/master/Dapper.SimpleCRUDTests/Tests.cs)
+Dapper.MoCRUD has a basic test suite in the [test project](https://github.com/ericdc1/dapper.MoCRUD/blob/master/Dapper.MoCRUDTests/Tests.cs)
 
 
