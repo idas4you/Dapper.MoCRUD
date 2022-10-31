@@ -6,7 +6,7 @@
     <title>Dapper.SimpleCRUD</title>
     <authors>Eric Coffman</authors>
     <owners>Eric Coffman</owners>
-    <projectUrl>http://github.com/ericdc1/Dapper.SimpleCRUD/</projectUrl>
+    <projectUrl>http://github.com/idas4you/Dapper.MoCRUD/</projectUrl>
     <license type="file">License.txt</license>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <icon>images\SimpleCRUD-200x200.png</icon>
@@ -52,7 +52,7 @@
 	* version 2.2.0 Dapper 2.x support
 	* version 2.3.0 Update DB2 support (mvaz77), Interface support (jonathanlarouche)
 	</releaseNotes>
-    <copyright>Copyright Eric Coffman 2019</copyright>
+    <copyright>Copyright idas4you 2022</copyright>
     <tags>orm dapper micro-orm CRUD</tags>
     <dependencies>	  
 	  <group targetFramework=".NETStandard2.0">
@@ -85,9 +85,9 @@
   </metadata>
   
   <files>
-	<file src="Dapper.SimpleCRUD\bin\Release\netstandard2.0\Dapper.SimpleCRUD.dll" target="lib\netstandard2.0\Dapper.SimpleCRUD.dll" />
-        <file src="Dapper.SimpleCRUD\bin\Release\netstandard2.0\Dapper.SimpleCRUD.pdb" target="lib\netstandard2.0\Dapper.SimpleCRUD.pdb" />
-        <file src="Dapper.SimpleCRUD\bin\Release\netstandard2.0\Dapper.SimpleCRUD.xml" target="lib\netstandard2.0\Dapper.SimpleCRUD.xml" />
+	<file src="Dapper.MoCRUD\bin\Release\netstandard2.0\Dapper.MoCRUD.dll" target="lib\netstandard2.0\Dapper.SimpleCRUD.dll" />
+        <file src="Dapper.MoCRUD\bin\Release\netstandard2.0\Dapper.MoCRUD.pdb" target="lib\netstandard2.0\Dapper.SimpleCRUD.pdb" />
+        <file src="Dapper.MoCRUD\bin\Release\netstandard2.0\Dapper.MoCRUD.xml" target="lib\netstandard2.0\Dapper.SimpleCRUD.xml" />
    <file src="License.txt" target="" />
    <file src="images\SimpleCRUD-200x200.png" target="images\" />
   </files>

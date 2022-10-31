@@ -1,8 +1,12 @@
 Dapper.MoCRUD - simple CRUD helpers for Dapper
 ========================================
+
+| Package | NuGet Stable | Downloads |
+| ------- | ------------ | ----------------- |
+| [Dapper.MoCRUD](https://www.nuget.org/packages/Dapper.MoCRUD/) | [![Dapper](https://img.shields.io/nuget/v/Dapper.MoCRUD.svg)](https://www.nuget.org/packages/Dapper.MoCRUD/) | [![Dapper](https://img.shields.io/nuget/dt/Dapper.MoCRUD.svg)](https://www.nuget.org/packages/Dapper.MoCRUD/) |
 Features
 --------
-<img  align="right" src="https://raw.githubusercontent.com/idas4you/Dapper.MoCRUD/master/images/MoCRUD-200x200.png" alt="MoCRUD">
+
 Dapper.MoCRUD is a [single file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUD.cs) you can drop in to your project that will extend your IDbConnection interface. (If you want dynamic support, you need an [additional file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUDAsync.cs).)
 
 Who wants to write basic read/insert/update/delete statements? 
@@ -16,6 +20,7 @@ Finally, I wanted the table name to match the class name by default but allow ov
 This extension adds the following 8 helpers: 
 
 - Get(id) - gets one record based on the primary key 
+- Get&lt;Type&gt;(anonymous object for where clause) - get one records matching the where options- 
 - GetList&lt;Type&gt;() - gets list of records all records from a table
 - GetList&lt;Type&gt;(anonymous object for where clause) - gets list of all records matching the where options
 - GetList&lt;Type&gt;(string for conditions, anonymous object with parameters) - gets list of all records matching the conditions

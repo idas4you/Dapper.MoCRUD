@@ -206,6 +206,48 @@ namespace Dapper
             return connection.Query<T>(sb.ToString(), dynParms, transaction, true, commandTimeout).FirstOrDefault();
         }
 
+
+        /// <summary>
+        /// <para>By default queries the table matching the class name</para>
+        /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
+        /// <para>conditions is an SQL where clause and/or order by clause ex: "where name='bob'" or "where age>=@Age"</para>
+        /// <para>parameters is an anonymous type to pass in named parameter values: new { Age = 15 }</para>
+        /// <para>Supports transaction and command timeout</para>
+        /// <para>Returns a single entity by a single id from table T</para>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="conditions"></param>
+        /// <param name="parameters"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <returns>Returns a single entity by a single id from table T.</returns>
+        public static T Get<T>(this IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var currenttype = typeof(T);
+            string name = GetTableName(currenttype);
+
+            var sb = new StringBuilder();
+            sb.Append("Select ");
+            //create a new empty instance of the type to get the base properties
+            BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
+            sb.AppendFormat(" from {0}", name);
+
+            sb.Append(" " + conditions);
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(String.Format("Get<{0}>: {1}", currenttype, sb));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(sb.ToString(), eExcute.select, currenttype);
+            }
+
+            return connection.QueryFirst<T>(sb.ToString(), parameters, transaction, commandTimeout);
+        }
+
         /// <summary>
         /// <para>By default queries the table matching the class name</para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
