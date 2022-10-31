@@ -4,7 +4,8 @@ Dapper.MoCRUD - simple CRUD helpers for Dapper
 | Package | NuGet Stable | Downloads |
 | ------- | ------------ | ----------------- |
 | [Dapper.MoCRUD](https://www.nuget.org/packages/Dapper.MoCRUD/) | [![Dapper](https://img.shields.io/nuget/v/Dapper.MoCRUD.svg)](https://www.nuget.org/packages/Dapper.MoCRUD/) | [![Dapper](https://img.shields.io/nuget/dt/Dapper.MoCRUD.svg)](https://www.nuget.org/packages/Dapper.MoCRUD/) |
-Features
+
+## Features
 --------
 
 Dapper.MoCRUD is a [single file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUD.cs) you can drop in to your project that will extend your IDbConnection interface. (If you want dynamic support, you need an [additional file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUDAsync.cs).)
