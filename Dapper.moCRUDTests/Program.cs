@@ -16,11 +16,13 @@ namespace Dapper.MoCRUDTests
 
         static void Main()
         {
-            Setup();
-            RunTests();
+            // SqlServer
+            //Setup();
+            //RunTests();
 
-            SetupSqLite();
-            RunTestsSqLite();
+            // SqLite
+            //SetupSqLite();
+            //RunTestsSqLite();
 
             //PostgreSQL tests assume port 5432 with username postgres and password postgrespass
             //they are commented out by default since postgres setup is required to run tests
@@ -29,8 +31,8 @@ namespace Dapper.MoCRUDTests
 
             //MySQL tests assume port 3306 with username admin and password admin
             //they are commented out by default since mysql setup is required to run tests
-            //SetupMySQL();
-            //RunTestsMySQL();
+            SetupMySQL();
+            RunTestsMySQL();
 
             //DB2 tests assume port 50000 with username db2admin and password db2admin
             //they are commented out by default since db2 setup is required to run tests
@@ -96,9 +98,11 @@ namespace Dapper.MoCRUDTests
                 connection.Execute(@" CREATE SCHEMA Log; ");
                 connection.Execute(@" create table Log.CarLog (Id SERIAL PRIMARY KEY, LogNotes varchar NOT NULL) ");
                 connection.Execute(@" CREATE TABLE GUIDTest(Id uuid PRIMARY KEY,name varchar NOT NULL)");
-                connection.Execute(@" create table StrangeColumnNames (ItemId Serial PRIMARY KEY, word varchar not null, colstringstrangeword varchar, keywordedproperty varchar) ");
-                connection.Execute(@" create table UserWithoutAutoIdentity (Id int PRIMARY KEY, Name varchar not null, Age int not null) ");
-
+                connection.Execute(@" create TABLE StrangeColumnNames (ItemId Serial PRIMARY KEY, word varchar not null, colstringstrangeword varchar, keywordedproperty varchar) ");
+                connection.Execute(@" create TABLE UserWithoutAutoIdentity (Id int PRIMARY KEY, Name varchar not null, Age int not null) ");
+                connection.Execute(@" create TABLE IgnoreColumns (Id SERIAL PRIMARY KEY, IgnoreInsert varchar null, IgnoreUpdate varchar null, IgnoreSelect varchar null, IgnoreAll varchar null) ");
+                connection.Execute(@" CREATE TABLE KeyMaster (Key1 INT NOT NULL, Key2 INT NOT NULL, CONSTRAINT pk1 PRIMARY KEY(Key1,Key2))");
+                connection.Execute(@" CREATE TABLE stringtest (stringkey varchar NOT NULL PRIMARY KEY, name varchar NOT NULL)");
             }
 
         }
@@ -111,9 +115,9 @@ namespace Dapper.MoCRUDTests
             using (connection)
             {
                 connection.Open();
-                connection.Execute(@" create table Users (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime default current_timestamp ) ");
-                connection.Execute(@" create table Car (CarId INTEGER PRIMARY KEY AUTOINCREMENT, Id INTEGER null, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
-                connection.Execute(@" create table BigCar (CarId INTEGER PRIMARY KEY AUTOINCREMENT, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
+                connection.Execute(@" CREATE TABLE Users (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime default current_timestamp ) ");
+                connection.Execute(@" CREATE TABLE Car (CarId INTEGER PRIMARY KEY AUTOINCREMENT, Id INTEGER null, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
+                connection.Execute(@" CREATE TABLE BigCar (CarId INTEGER PRIMARY KEY AUTOINCREMENT, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" insert into BigCar (CarId,Make,Model) Values (2147483649,'car','car') ");
                 connection.Execute(@" create table City (Name nvarchar(100) not null, Population int not null) ");
                 connection.Execute(@" CREATE TABLE GUIDTest([Id] [uniqueidentifier] NOT NULL,[name] [varchar](50) NOT NULL, CONSTRAINT [PK_GUIDTest] PRIMARY KEY  ([Id] ASC))");
@@ -128,7 +132,7 @@ namespace Dapper.MoCRUDTests
 
         private static void SetupMySQL()
         {
-            using (var connection = new MySqlConnection(String.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};", "localhost", "3306", "root", "admin", "sys")))
+            using (var connection = new MySqlConnection(String.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};CharSet=utf8;", "localhost", "3306", "root", "admin", "sys")))
             {
                 connection.Open();
                 // drop  database 
@@ -150,6 +154,7 @@ namespace Dapper.MoCRUDTests
                 connection.Execute(@" create table UserWithoutAutoIdentity (Id INTEGER PRIMARY KEY, Name nvarchar(100) not null, Age int not null) ");
                 connection.Execute(@" create table IgnoreColumns (Id INTEGER PRIMARY KEY AUTO_INCREMENT, IgnoreInsert nvarchar(100) null, IgnoreUpdate nvarchar(100) null, IgnoreSelect nvarchar(100)  null, IgnoreAll nvarchar(100) null) ");
                 connection.Execute(@" CREATE table KeyMaster (Key1 INTEGER NOT NULL, Key2 INTEGER NOT NULL, CONSTRAINT PK_KeyMaster PRIMARY KEY CLUSTERED (Key1 ASC, Key2 ASC))");
+                connection.Execute(@" CREATE TABLE stringtest (stringkey nvarchar(50) PRIMARY KEY NOT NULL,name nvarchar(50) NOT NULL)");
             }
 
         }
