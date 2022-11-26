@@ -54,7 +54,7 @@ namespace Dapper
             StringBuilderCacheDict.AddOrUpdate(cacheKey, value, (t, v) => value);
             sb.Append(value);
         }
-        
+
         /// <summary>
         /// Returns the current dialect name
         /// </summary>
@@ -70,7 +70,7 @@ namespace Dapper
         /// <param name="dialect"></param>
         public static void SetDialect(Dialect dialect)
         {
-            
+
             switch (dialect)
             {
                 case Dialect.PostgreSQL:
@@ -112,7 +112,7 @@ namespace Dapper
                     _dialect = Dialect.SQLServer;
                     _paramPrefix = "@";
                     _encapsulation = "[{0}]";
-                    _getIdentitySql = string.Format("SELECT CAST(SCOPE_IDENTITY()  AS BIGINT) AS [id]");
+                    _getIdentitySql = string.Format("SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS [id]");
                     _getPagedListSql = "SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY {OrderBy}) AS PagedNumber, {SelectColumns} FROM {TableName} {WhereClause}) AS u WHERE PagedNumber BETWEEN (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
                     break;
             }
@@ -156,7 +156,9 @@ namespace Dapper
             var idProps = GetIdProperties(currenttype).ToList();
 
             if (!idProps.Any())
+            {
                 throw new ArgumentException("Get<T> only supports an entity with a [Key] or Id property");
+            }
 
             var name = GetTableName(currenttype);
             var sb = new StringBuilder();
@@ -169,12 +171,14 @@ namespace Dapper
             {
                 if (i > 0)
                     sb.Append(" and ");
-                sb.AppendFormat("{0} = {2}{1}", GetColumnName(idProps[i]), idProps[i].Name, _paramPrefix);
+                sb.AppendFormat("{0} = {1}", GetColumnName(idProps[i]), _paramPrefix + idProps[i].Name);
             }
 
             var dynParms = new DynamicParameters();
             if (idProps.Count == 1)
+            {
                 dynParms.Add(_paramPrefix + idProps.First().Name, id);
+            }
             else
             {
                 foreach (var prop in idProps)
@@ -365,9 +369,9 @@ namespace Dapper
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method : https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
                 return (TKey)typeof(MoCRUD)
-                    .GetMethods().Where(methodInfo=>methodInfo.Name == nameof(Insert) && methodInfo.GetGenericArguments().Count()==2).Single()
+                    .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Insert) && methodInfo.GetGenericArguments().Count() == 2).Single()
                     .MakeGenericMethod(new Type[] { typeof(TKey), entityToInsert.GetType() })
-                    .Invoke(null, new object[] { connection,entityToInsert,transaction,commandTimeout });
+                    .Invoke(null, new object[] { connection, entityToInsert, transaction, commandTimeout });
             }
             var idProps = GetIdProperties(entityToInsert).ToList();
 
@@ -545,7 +549,7 @@ namespace Dapper
             {
                 if (i > 0)
                     sb.Append(" and ");
-                sb.AppendFormat("{0} = {2}{1}", GetColumnName(idProps[i]), idProps[i].Name, _paramPrefix);
+                sb.AppendFormat("{0} = {1}", GetColumnName(idProps[i]), _paramPrefix + idProps[i].Name);
             }
 
             var dynParms = new DynamicParameters();
@@ -769,10 +773,9 @@ namespace Dapper
                     }
                 }
                 sb.AppendFormat(
-                    useIsNull ? "{0} is null" : "{0} = {2}{1}",
+                    useIsNull ? "{0} is null" : "{0} = {1}",
                     GetColumnName(propertyToUse),
-                    propertyToUse.Name,
-                    _paramPrefix);
+                    _paramPrefix + propertyToUse.Name);
 
                 if (i < propertyInfos.Count() - 1)
                     sb.AppendFormat(" and ");
@@ -806,7 +809,7 @@ namespace Dapper
 
                     if (property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && property.GetCustomAttributes(true).All(attr => attr.GetType().Name != typeof(RequiredAttribute).Name) && property.PropertyType != typeof(Guid)) continue;
 
-                    sb.AppendFormat("{1}{0}", property.Name, _paramPrefix);
+                    sb.AppendFormat("{0}", _paramPrefix + property.Name);
                     if (i < props.Count() - 1)
                         sb.Append(", ");
                 }
@@ -1271,6 +1274,6 @@ internal static class TypeExtension
 
     public static string CacheKey(this IEnumerable<PropertyInfo> props)
     {
-        return string.Join(",",props.Select(p=> p.DeclaringType.FullName + "." + p.Name).ToArray());
+        return string.Join(",", props.Select(p => p.DeclaringType.FullName + "." + p.Name).ToArray());
     }
 }
