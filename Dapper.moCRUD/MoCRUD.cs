@@ -14,6 +14,14 @@ namespace Dapper
     /// </summary>
     public static partial class MoCRUD
     {
+        public enum eExcute
+        {
+            select,
+            insert,
+            update,
+            delete,
+        }
+
         static MoCRUD()
         {
             SetDialect(_dialect);
@@ -33,6 +41,8 @@ namespace Dapper
 
         private static ITableNameResolver _tableNameResolver = new TableNameResolver();
         private static IColumnNameResolver _columnNameResolver = new ColumnNameResolver();
+
+        public static Action<string, eExcute, Type> DebugCallback;
 
         /// <summary>
         /// Append a Cached version of a strinbBuilderAction result based on a cacheKey
@@ -165,13 +175,13 @@ namespace Dapper
             sb.Append("Select ");
             //create a new empty instance of the type to get the base properties
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
-            sb.AppendFormat(" from {0} where ", name);
+            sb.AppendFormat($" from {name} where ");
 
             for (var i = 0; i < idProps.Count; i++)
             {
                 if (i > 0)
                     sb.Append(" and ");
-                sb.AppendFormat("{0} = {1}", GetColumnName(idProps[i]), _paramPrefix + idProps[i].Name);
+                sb.AppendFormat($"{GetColumnName(idProps[i])} = {_paramPrefix}{idProps[i].Name}");
             }
 
             var dynParms = new DynamicParameters();
@@ -186,9 +196,58 @@ namespace Dapper
             }
 
             if (Debugger.IsAttached)
+            {
                 Trace.WriteLine(String.Format("Get<{0}>: {1} with Id: {2}", currenttype, sb, id));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(sb.ToString(), eExcute.select, currenttype);
+            }
 
             return connection.Query<T>(sb.ToString(), dynParms, transaction, true, commandTimeout).FirstOrDefault();
+        }
+
+
+        /// <summary>
+        /// <para>By default queries the table matching the class name</para>
+        /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
+        /// <para>conditions is an SQL where clause and/or order by clause ex: "where name='bob'" or "where age>=@Age"</para>
+        /// <para>parameters is an anonymous type to pass in named parameter values: new { Age = 15 }</para>
+        /// <para>Supports transaction and command timeout</para>
+        /// <para>Returns a single entity by a single id from table T</para>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="conditions"></param>
+        /// <param name="parameters"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <returns>Returns a single entity by a single id from table T.</returns>
+        public static T Get<T>(this IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var currenttype = typeof(T);
+            string name = GetTableName(currenttype);
+
+            var sb = new StringBuilder();
+            sb.Append("Select ");
+            //create a new empty instance of the type to get the base properties
+            BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
+            sb.AppendFormat(" from {0}", name);
+
+            sb.Append(" " + conditions);
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(String.Format("Get<{0}>: {1}", currenttype, sb));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(sb.ToString(), eExcute.select, currenttype);
+            }
+
+            return connection.QueryFirst<T>(sb.ToString(), parameters, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -223,7 +282,14 @@ namespace Dapper
             }
 
             if (Debugger.IsAttached)
+            {
                 Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(sb.ToString(), eExcute.select, currenttype);
+            }
 
             return connection.Query<T>(sb.ToString(), whereConditions, transaction, true, commandTimeout);
         }
@@ -257,7 +323,14 @@ namespace Dapper
             sb.Append(" " + conditions);
 
             if (Debugger.IsAttached)
+            {
                 Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(sb.ToString(), eExcute.select, currenttype);
+            }
 
             return connection.Query<T>(sb.ToString(), parameters, transaction, true, commandTimeout);
         }
@@ -327,6 +400,11 @@ namespace Dapper
 
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("GetListPaged<{0}>: {1}", currenttype, query));
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(sb.ToString(), eExcute.select, currenttype);
+            }
 
             return connection.Query<T>(query, parameters, transaction, true, commandTimeout);
         }
@@ -425,6 +503,11 @@ namespace Dapper
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("Insert: {0}", sb));
 
+            if (DebugCallback != null)
+            {
+                DebugCallback(sb.ToString(), eExcute.insert, typeof(TEntity));
+            }
+
             var r = connection.Query(sb.ToString(), entityToInsert, transaction, true, commandTimeout);
 
             if (keytype == typeof(Guid) || keyHasPredefinedValue)
@@ -450,7 +533,8 @@ namespace Dapper
         /// <returns>The number of affected records</returns>
         public static int Update<TEntity>(this IDbConnection connection, TEntity entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
+            var currenttype = typeof(TEntity);
+            if (currenttype.IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
                 return (int)typeof(MoCRUD)
                     .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
@@ -458,7 +542,7 @@ namespace Dapper
                     .Invoke(null, new object[] { connection, entityToUpdate, transaction, commandTimeout });
             }
             var masterSb = new StringBuilder();
-            StringBuilderCache(masterSb, $"{typeof(TEntity).FullName}_Update", sb =>
+            StringBuilderCache(masterSb, $"{currenttype.FullName}_Update", sb =>
             {
                 var idProps = GetIdProperties(entityToUpdate).ToList();
 
@@ -473,10 +557,19 @@ namespace Dapper
                 BuildUpdateSet(entityToUpdate, sb);
                 sb.Append(" where ");
                 BuildWhere<TEntity>(sb, idProps, entityToUpdate);
-
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("Update: {0}", sb));
             });
+
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine("Update: ${masterSb}");
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(masterSb.ToString(), eExcute.insert, typeof(TEntity));
+            }
+
             return connection.Execute(masterSb.ToString(), entityToUpdate, transaction, commandTimeout);
         }
 
@@ -493,10 +586,11 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int Delete<TEntity>(this IDbConnection connection, TEntity entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null)
         {
+            var currenttype = typeof(TEntity);
             var masterSb = new StringBuilder();
-            StringBuilderCache(masterSb, $"{typeof(T).FullName}_Delete", sb =>
+            StringBuilderCache(masterSb, $"{currenttype.FullName}_Delete", sb =>
             {
 
                 var idProps = GetIdProperties(entityToDelete).ToList();
@@ -509,11 +603,20 @@ namespace Dapper
                 sb.AppendFormat("delete from {0}", name);
 
                 sb.Append(" where ");
-                BuildWhere<T>(sb, idProps, entityToDelete);
-
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("Delete: {0}", sb));
+                BuildWhere<TEntity>(sb, idProps, entityToDelete);
             });
+
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(String.Format("Delete: {0}", masterSb));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(masterSb.ToString(), eExcute.delete, currenttype);
+            }
+
             return connection.Execute(masterSb.ToString(), entityToDelete, transaction, commandTimeout);
         }
 
@@ -531,11 +634,10 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int Delete<T>(this IDbConnection connection, object id, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int Delete<TEntity>(this IDbConnection connection, object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            var currenttype = typeof(T);
+            var currenttype = typeof(TEntity);
             var idProps = GetIdProperties(currenttype).ToList();
-
 
             if (!idProps.Any())
                 throw new ArgumentException("Delete<T> only supports an entity with a [Key] or Id property");
@@ -564,6 +666,11 @@ namespace Dapper
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("Delete<{0}> {1}", currenttype, sb));
 
+            if (DebugCallback != null)
+            {
+                DebugCallback(sb.ToString(), eExcute.delete, currenttype);
+            }
+
             return connection.Execute(sb.ToString(), dynParms, transaction, commandTimeout);
         }
 
@@ -582,12 +689,13 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int DeleteList<T>(this IDbConnection connection, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int DeleteList<TEntity>(this IDbConnection connection, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
         {
+            var currenttype = typeof(TEntity);
+
             var masterSb = new StringBuilder();
-            StringBuilderCache(masterSb, $"{typeof(T).FullName}_DeleteWhere{whereConditions?.GetType()?.FullName}", sb =>
+            StringBuilderCache(masterSb, $"{currenttype.FullName}_DeleteWhere{whereConditions?.GetType()?.FullName}", sb =>
             {
-                var currenttype = typeof(T);
                 var name = GetTableName(currenttype);
 
                 var whereprops = GetAllProperties(whereConditions).ToArray();
@@ -595,12 +703,20 @@ namespace Dapper
                 if (whereprops.Any())
                 {
                     sb.Append(" where ");
-                    BuildWhere<T>(sb, whereprops);
+                    BuildWhere<TEntity>(sb, whereprops);
                 }
-
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
             });
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, masterSb));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(masterSb.ToString(), eExcute.delete, currenttype);
+            }
+
             return connection.Execute(masterSb.ToString(), whereConditions, transaction, commandTimeout);
         }
 
@@ -622,7 +738,9 @@ namespace Dapper
         /// <returns>The number of records affected</returns>
         public static int DeleteList<T>(this IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
+            var currenttype = typeof(T);
             var masterSb = new StringBuilder();
+
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_DeleteWhere{conditions}", sb =>
             {
                 if (string.IsNullOrEmpty(conditions))
@@ -630,15 +748,22 @@ namespace Dapper
                 if (!conditions.ToLower().Contains("where"))
                     throw new ArgumentException("DeleteList<T> requires a where clause and must contain the WHERE keyword");
 
-                var currenttype = typeof(T);
                 var name = GetTableName(currenttype);
 
                 sb.AppendFormat("Delete from {0}", name);
                 sb.Append(" " + conditions);
-
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
             });
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, currenttype));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(currenttype.ToString(), eExcute.delete, currenttype);
+            }
+
             return connection.Execute(masterSb.ToString(), parameters, transaction, commandTimeout);
         }
 
@@ -667,7 +792,14 @@ namespace Dapper
             sb.Append(" " + conditions);
 
             if (Debugger.IsAttached)
+            {
                 Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(currenttype.ToString(), eExcute.select, currenttype);
+            }
 
             return connection.ExecuteScalar<int>(sb.ToString(), parameters, transaction, commandTimeout);
         }
@@ -948,7 +1080,7 @@ namespace Dapper
         //Gets the table name for this entity
         //For Inserts and updates we have a whole entity so this method is used
         //Uses class name by default and overrides if the class has a Table attribute
-        private static string GetTableName(object entity)
+        public static string GetTableName(object entity)
         {
             var type = entity.GetType();
             return GetTableName(type);
@@ -958,7 +1090,7 @@ namespace Dapper
         //For Get(id) and Delete(id) we don't have an entity, just the type so this method is used
         //Use dynamic type to be able to handle both our Table-attribute and the DataAnnotation
         //Uses class name by default and overrides if the class has a Table attribute
-        private static string GetTableName(Type type)
+        public static string GetTableName(Type type)
         {
             string tableName;
 
@@ -972,7 +1104,7 @@ namespace Dapper
             return tableName;
         }
 
-        private static string GetColumnName(PropertyInfo propertyInfo)
+        public static string GetColumnName(PropertyInfo propertyInfo)
         {
             string columnName, key = string.Format("{0}.{1}", propertyInfo.DeclaringType, propertyInfo.Name);
 

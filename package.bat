@@ -1,2 +1,2 @@
-nuget pack Dapper.SimpleCRUD.nuspec
+nuget pack Dapper.MoCRUD.nuspec
 pause
