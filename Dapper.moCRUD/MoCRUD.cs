@@ -985,14 +985,14 @@ namespace Dapper
         }
 
         //Get all properties in an entity
-        private static IEnumerable<PropertyInfo> GetAllProperties<T>(T entity) where T : class
+        public static IEnumerable<PropertyInfo> GetAllProperties<T>(T entity) where T : class
         {
             if (entity == null) return new PropertyInfo[0];
             return entity.GetType().GetProperties();
         }
 
         //Get all properties that are not decorated with the Editable(false) attribute
-        private static IEnumerable<PropertyInfo> GetScaffoldableProperties<T>()
+        public static IEnumerable<PropertyInfo> GetScaffoldableProperties<T>()
         {
             IEnumerable<PropertyInfo> props = typeof(T).GetProperties();
 
@@ -1005,7 +1005,7 @@ namespace Dapper
         //Determine if the Attribute has an AllowEdit key and return its boolean state
         //fake the funk and try to mimic EditableAttribute in System.ComponentModel.DataAnnotations 
         //This allows use of the DataAnnotations property in the model and have the SimpleCRUD engine just figure it out without a reference
-        private static bool IsEditable(PropertyInfo pi)
+        public static bool IsEditable(PropertyInfo pi)
         {
             var attributes = pi.GetCustomAttributes(false);
             if (attributes.Length > 0)
@@ -1023,7 +1023,7 @@ namespace Dapper
         //Determine if the Attribute has an IsReadOnly key and return its boolean state
         //fake the funk and try to mimic ReadOnlyAttribute in System.ComponentModel 
         //This allows use of the DataAnnotations property in the model and have the SimpleCRUD engine just figure it out without a reference
-        private static bool IsReadOnly(PropertyInfo pi)
+        public static bool IsReadOnly(PropertyInfo pi)
         {
             var attributes = pi.GetCustomAttributes(false);
             if (attributes.Length > 0)
@@ -1043,7 +1043,7 @@ namespace Dapper
         //Not marked ReadOnly
         //Not marked IgnoreInsert
         //Not marked NotMapped
-        private static IEnumerable<PropertyInfo> GetUpdateableProperties<T>(T entity)
+        public static IEnumerable<PropertyInfo> GetUpdateableProperties<T>(T entity)
         {
             var updateableProperties = GetScaffoldableProperties<T>();
             //remove ones with ID
@@ -1062,7 +1062,7 @@ namespace Dapper
 
         //Get all properties that are named Id or have the Key attribute
         //For Inserts and updates we have a whole entity so this method is used
-        private static IEnumerable<PropertyInfo> GetIdProperties(object entity)
+        public static IEnumerable<PropertyInfo> GetIdProperties(object entity)
         {
             var type = entity.GetType();
             return GetIdProperties(type);
@@ -1070,7 +1070,7 @@ namespace Dapper
 
         //Get all properties that are named Id or have the Key attribute
         //For Get(id) and Delete(id) we don't have an entity, just the type so this method is used
-        private static IEnumerable<PropertyInfo> GetIdProperties(Type type)
+        public static IEnumerable<PropertyInfo> GetIdProperties(Type type)
         {
             var tp = type.GetProperties().Where(p => p.GetCustomAttributes(true).Any(attr => attr.GetType().Name == typeof(KeyAttribute).Name)).ToList();
             return tp.Any() ? tp : type.GetProperties().Where(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
