@@ -122,7 +122,7 @@ namespace Dapper
                     _dialect = Dialect.SQLServer;
                     _paramPrefix = "@";
                     _encapsulation = "[{0}]";
-                    _getIdentitySql = string.Format("SELECT CAST(SCOPE_IDENTITY()  AS BIGINT) AS [id]");
+                    _getIdentitySql = string.Format("SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS [id]");
                     _getPagedListSql = "SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY {OrderBy}) AS PagedNumber, {SelectColumns} FROM {TableName} {WhereClause}) AS u WHERE PagedNumber BETWEEN (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
                     break;
             }
@@ -166,7 +166,9 @@ namespace Dapper
             var idProps = GetIdProperties(currenttype).ToList();
 
             if (!idProps.Any())
+            {
                 throw new ArgumentException("Get<T> only supports an entity with a [Key] or Id property");
+            }
 
             var name = GetTableName(currenttype);
             var sb = new StringBuilder();
@@ -649,7 +651,7 @@ namespace Dapper
             {
                 if (i > 0)
                     sb.Append(" and ");
-                sb.AppendFormat("{0} = {2}{1}", GetColumnName(idProps[i]), idProps[i].Name, _paramPrefix);
+                sb.AppendFormat("{0} = {1}", GetColumnName(idProps[i]), _paramPrefix + idProps[i].Name);
             }
 
             var dynParms = new DynamicParameters();
@@ -903,10 +905,9 @@ namespace Dapper
                     }
                 }
                 sb.AppendFormat(
-                    useIsNull ? "{0} is null" : "{0} = {2}{1}",
+                    useIsNull ? "{0} is null" : "{0} = {1}",
                     GetColumnName(propertyToUse),
-                    propertyToUse.Name,
-                    _paramPrefix);
+                    _paramPrefix + propertyToUse.Name);
 
                 if (i < propertyInfos.Count() - 1)
                     sb.AppendFormat(" and ");
@@ -940,7 +941,7 @@ namespace Dapper
 
                     if (property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && property.GetCustomAttributes(true).All(attr => attr.GetType().Name != typeof(RequiredAttribute).Name) && property.PropertyType != typeof(Guid)) continue;
 
-                    sb.AppendFormat("{1}{0}", property.Name, _paramPrefix);
+                    sb.AppendFormat("{0}", _paramPrefix + property.Name);
                     if (i < props.Count() - 1)
                         sb.Append(", ");
                 }
