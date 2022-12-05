@@ -574,6 +574,81 @@ namespace Dapper
         }
 
         /// <summary>
+        /// <para>Updates a record or records in the database with only the properties of TEntity</para>
+        /// <para>By default updates records in the table matching the class name</para>
+        /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
+        /// <para>Updates records where the Id property and properties with the [Key] attribute match those in the database.</para>
+        /// <para>Properties marked with properties param are ignored</para>
+        /// <para>Supports transaction and command timeout</para>
+        /// <para>Returns number of rows affected</para>
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="entityToUpdate"></param>
+        /// <param name="properties"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <returns>The number of affected records</returns>
+        public static int Update<TEntity>(this IDbConnection connection, TEntity entityToUpdate, IEnumerable<string> properties, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var currenttype = typeof(TEntity);
+            if (currenttype.IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
+            {
+                return (int)typeof(MoCRUD)
+                    .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
+                    .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
+                    .Invoke(null, new object[] { connection, entityToUpdate, properties, transaction, commandTimeout });
+            }
+            var masterSb = new StringBuilder();
+
+            var propertyfilter = properties.ToList();
+            propertyfilter.Sort();
+
+            StringBuilderCache(masterSb, $"{currenttype.FullName}_{string.Join("_", propertyfilter)}_Update", sb =>
+            {
+                var idProps = GetIdProperties(entityToUpdate).ToList();
+
+                if (!idProps.Any())
+                    throw new ArgumentException("Entity must have at least one [Key] or Id property");
+
+                var name = GetTableName(entityToUpdate);
+
+                sb.AppendFormat("update {0}", name);
+
+                sb.AppendFormat(" set ");
+                var nonIdProps = GetUpdateableProperties(entityToUpdate).ToArray();
+
+                for (var i = 0; i < nonIdProps.Length; i++)
+                {
+                    var property = nonIdProps[i];
+
+                    if (propertyfilter.Contains(property.Name))
+                    {
+                        sb.AppendFormat($"{GetColumnName(property)} = {_paramPrefix}{property.Name}");
+                        if (i < nonIdProps.Length - 1)
+                            sb.AppendFormat(", ");
+                    }
+                }
+
+                sb.Append(" where ");
+                BuildWhere<TEntity>(sb, idProps, entityToUpdate);
+            });
+
+
+            if (Debugger.IsAttached)
+            {
+                Trace.WriteLine($"Update: {masterSb}");
+            }
+
+            if (DebugCallback != null)
+            {
+                DebugCallback(masterSb.ToString(), eExcute.insert, typeof(TEntity));
+            }
+
+            return connection.Execute(masterSb.ToString(), entityToUpdate, transaction, commandTimeout);
+        }
+
+
+        /// <summary>
         /// <para>Deletes a record or records in the database that match the object passed in</para>
         /// <para>-By default deletes records in the table matching the class name</para>
         /// <para>Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
@@ -849,7 +924,7 @@ namespace Dapper
                 {
                     var property = nonIdProps[i];
 
-                    sb.AppendFormat("{0} = {2}{1}", GetColumnName(property), property.Name, _paramPrefix);
+                    sb.AppendFormat($"{GetColumnName(property)} = {_paramPrefix}{property.Name}");
                     if (i < nonIdProps.Length - 1)
                         sb.AppendFormat(", ");
                 }

@@ -262,7 +262,7 @@ namespace Dapper.MoCRUDTests
                 for (int i = 1; i <= 1000; i++)
                 {
                     user.Age = i;
-                    connection.Update(user, transaction);
+                    connection.Update(user, new List<string> { nameof(User.Age)}, transaction);
                 }
             }
         }
