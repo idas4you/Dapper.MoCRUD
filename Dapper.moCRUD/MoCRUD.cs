@@ -247,7 +247,7 @@ namespace Dapper
                 DebugCallback(sb.ToString(), eExcute.select, currenttype);
             }
 
-            return connection.QueryFirst<T>(sb.ToString(), parameters, transaction, commandTimeout);
+            return connection.QueryFirstOrDefault<T>(sb.ToString(), parameters, transaction, commandTimeout);
         }
 
         /// <summary>
