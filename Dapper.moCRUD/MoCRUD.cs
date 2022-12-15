@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
@@ -14,13 +15,6 @@ namespace Dapper
     /// </summary>
     public static partial class MoCRUD
     {
-        public enum eExcute
-        {
-            select,
-            insert,
-            update,
-            delete,
-        }
 
         static MoCRUD()
         {
@@ -39,10 +33,10 @@ namespace Dapper
         private static readonly ConcurrentDictionary<string, string> StringBuilderCacheDict = new ConcurrentDictionary<string, string>();
         private static bool StringBuilderCacheEnabled = true;
 
+        private static ILogger _logger = null;
+
         private static ITableNameResolver _tableNameResolver = new TableNameResolver();
         private static IColumnNameResolver _columnNameResolver = new ColumnNameResolver();
-
-        public static Action<string, eExcute, Type> DebugCallback;
 
         /// <summary>
         /// Append a Cached version of a strinbBuilderAction result based on a cacheKey
@@ -128,6 +122,11 @@ namespace Dapper
             }
         }
 
+        public static void SetLogger(ILogger logger)
+        {
+            _logger = logger;
+        }
+
         /// <summary>
         /// Sets the table name resolver
         /// </summary>
@@ -195,15 +194,8 @@ namespace Dapper
                     dynParms.Add(_paramPrefix + prop.Name, id.GetType().GetProperty(prop.Name).GetValue(id, null));
             }
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(String.Format("Get<{0}>: {1} with Id: {2}", currenttype, sb, id));
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(sb.ToString(), eExcute.select, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"Get<{currenttype}>: {sb} with Id: {id}"); }
+            if (_logger != null) { _logger.LogTrace($"Get<{currenttype}>: {sb} with Id: {id}"); }
 
             return connection.Query<T>(sb.ToString(), dynParms, transaction, true, commandTimeout).FirstOrDefault();
         }
@@ -237,15 +229,8 @@ namespace Dapper
 
             sb.Append(" " + conditions);
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(String.Format("Get<{0}>: {1}", currenttype, sb));
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(sb.ToString(), eExcute.select, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"Get<{currenttype}>: {sb}"); }
+            if (_logger != null) { _logger.LogTrace($"Get<{currenttype}>: {sb}"); }
 
             return connection.QueryFirstOrDefault<T>(sb.ToString(), parameters, transaction, commandTimeout);
         }
@@ -281,15 +266,8 @@ namespace Dapper
                 BuildWhere<T>(sb, whereprops, whereConditions);
             }
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(sb.ToString(), eExcute.select, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"GetList<{currenttype}>: {sb}"); }
+            if (_logger != null) { _logger.LogTrace($"GetList<{currenttype}>: {sb}"); }
 
             return connection.Query<T>(sb.ToString(), whereConditions, transaction, true, commandTimeout);
         }
@@ -322,15 +300,8 @@ namespace Dapper
 
             sb.Append(" " + conditions);
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(sb.ToString(), eExcute.select, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"GetList<{currenttype}>: {sb}"); }
+            if (_logger != null) { _logger.LogTrace($"GetList<{currenttype}>: {sb}"); }
 
             return connection.Query<T>(sb.ToString(), parameters, transaction, true, commandTimeout);
         }
@@ -398,13 +369,8 @@ namespace Dapper
             query = query.Replace("{WhereClause}", conditions);
             query = query.Replace("{Offset}", ((pageNumber - 1) * rowsPerPage).ToString());
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("GetListPaged<{0}>: {1}", currenttype, query));
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(sb.ToString(), eExcute.select, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"GetListPaged<{currenttype}>: {query}"); }
+            if (_logger != null) { _logger.LogTrace($"GetListPaged<{currenttype}>: {query}"); }
 
             return connection.Query<T>(query, parameters, transaction, true, commandTimeout);
         }
@@ -500,13 +466,8 @@ namespace Dapper
                 keyHasPredefinedValue = true;
             }
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Insert: {0}", sb));
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(sb.ToString(), eExcute.insert, typeof(TEntity));
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"Insert<{baseType}>: {sb}"); }
+            if (_logger != null) { _logger.LogTrace($"Insert<{baseType}>: {sb}"); }
 
             var r = connection.Query(sb.ToString(), entityToInsert, transaction, true, commandTimeout);
 
@@ -514,6 +475,7 @@ namespace Dapper
             {
                 return (TKey)idProps.First().GetValue(entityToInsert, null);
             }
+
             return (TKey)r.First().id;
         }
 
@@ -559,16 +521,8 @@ namespace Dapper
                 BuildWhere<TEntity>(sb, idProps, entityToUpdate);
             });
 
-
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine("Update: ${masterSb}");
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(masterSb.ToString(), eExcute.insert, typeof(TEntity));
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"Update: {masterSb}"); }
+            if (_logger != null) { _logger.LogTrace($"Update: {masterSb}"); }
 
             return connection.Execute(masterSb.ToString(), entityToUpdate, transaction, commandTimeout);
         }
@@ -633,16 +587,8 @@ namespace Dapper
                 BuildWhere<TEntity>(sb, idProps, entityToUpdate);
             });
 
-
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine($"Update: {masterSb}");
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(masterSb.ToString(), eExcute.insert, typeof(TEntity));
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"Update: {masterSb}"); }
+            if (_logger != null) { _logger.LogTrace($"Update: {masterSb}"); }
 
             return connection.Execute(masterSb.ToString(), entityToUpdate, transaction, commandTimeout);
         }
@@ -681,16 +627,8 @@ namespace Dapper
                 BuildWhere<TEntity>(sb, idProps, entityToDelete);
             });
 
-
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(String.Format("Delete: {0}", masterSb));
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(masterSb.ToString(), eExcute.delete, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"Delete: {masterSb}"); }
+            if (_logger != null) { _logger.LogTrace($"Delete: {masterSb}"); }
 
             return connection.Execute(masterSb.ToString(), entityToDelete, transaction, commandTimeout);
         }
@@ -738,13 +676,8 @@ namespace Dapper
                     dynParms.Add(_paramPrefix + prop.Name, id.GetType().GetProperty(prop.Name).GetValue(id, null));
             }
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Delete<{0}> {1}", currenttype, sb));
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(sb.ToString(), eExcute.delete, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"Delete<{currenttype}>: {sb}"); }
+            if (_logger != null) { _logger.LogTrace($"Delete<{currenttype}>: {sb}"); }
 
             return connection.Execute(sb.ToString(), dynParms, transaction, commandTimeout);
         }
@@ -782,15 +715,8 @@ namespace Dapper
                 }
             });
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, masterSb));
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(masterSb.ToString(), eExcute.delete, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"DeleteList<{currenttype}>: {masterSb}"); }
+            if (_logger != null) { _logger.LogTrace($"DeleteList<{currenttype}>: {masterSb}"); }
 
             return connection.Execute(masterSb.ToString(), whereConditions, transaction, commandTimeout);
         }
@@ -829,15 +755,8 @@ namespace Dapper
                 sb.Append(" " + conditions);
             });
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, currenttype));
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(currenttype.ToString(), eExcute.delete, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"DeleteList<{currenttype}>: {masterSb}"); }
+            if (_logger != null) { _logger.LogTrace($"DeleteList<{currenttype}>: {masterSb}"); }
 
             return connection.Execute(masterSb.ToString(), parameters, transaction, commandTimeout);
         }
@@ -866,15 +785,8 @@ namespace Dapper
             sb.AppendFormat(" from {0}", name);
             sb.Append(" " + conditions);
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
-            }
-
-            if (DebugCallback != null)
-            {
-                DebugCallback(currenttype.ToString(), eExcute.select, currenttype);
-            }
+            if (Debugger.IsAttached) { Trace.WriteLine($"RecordCount<{currenttype}>: {sb}"); }
+            if (_logger != null) { _logger.LogTrace($"RecordCount<{currenttype}>: {sb}"); }
 
             return connection.ExecuteScalar<int>(sb.ToString(), parameters, transaction, commandTimeout);
         }
@@ -907,8 +819,8 @@ namespace Dapper
                 BuildWhere<T>(sb, whereprops);
             }
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
+            if (Debugger.IsAttached) { Trace.WriteLine($"RecordCount<{currenttype}>: {sb}"); }
+            if (_logger != null) { _logger.LogTrace($"RecordCount<{currenttype}>: {sb}"); }
 
             return connection.ExecuteScalar<int>(sb.ToString(), whereConditions, transaction, commandTimeout);
         }
@@ -1355,6 +1267,15 @@ namespace Dapper
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class KeyAttribute : Attribute
+    {
+    }
+
+    /// <summary>
+    /// Specifies Key attribute.
+    /// You can use the System.ComponentModel.DataAnnotations version in its place to specify the Primary Key of a poco
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
+    public class ExplicitKeyAttribute : Attribute
     {
     }
 
