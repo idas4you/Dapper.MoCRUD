@@ -29,13 +29,35 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Returns a single entity by a single id from table T.</returns>
-        public static async Task<T> GetAsync<T>(this IDbConnection connection, object id, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<T> GetAsync<T>(this IDbConnection connection, object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             DynamicParameters dynParms;
 
             string sql = get<T>(id, out dynParms);
 
-            return (await connection.QueryAsync<T>(sql, dynParms, transaction, commandTimeout)).FirstOrDefault();
+            return connection.QueryFirstOrDefaultAsync<T>(sql, dynParms, transaction, commandTimeout);
+        }
+
+        /// <summary>
+        /// <para>By default queries the table matching the class name</para>
+        /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
+        /// <para>conditions is an SQL where clause and/or order by clause ex: "where name='bob'" or "where age>=@Age"</para>
+        /// <para>parameters is an anonymous type to pass in named parameter values: new { Age = 15 }</para>
+        /// <para>Supports transaction and command timeout</para>
+        /// <para>Returns a single entity by a single id from table T</para>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="conditions"></param>
+        /// <param name="parameters"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <returns>Returns a single entity by a single id from table T.</returns>
+        public static Task<T> GetAsync<T>(this IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            string sql = get<T>(conditions);
+
+            return connection.QueryFirstOrDefaultAsync<T>(sql, parameters, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -203,6 +225,21 @@ namespace Dapper
 
             System.Threading.CancellationToken cancelToken = token ?? default(System.Threading.CancellationToken);
             return await connection.ExecuteAsync(new CommandDefinition(sql, entityToUpdate, transaction, commandTimeout, cancellationToken: cancelToken));
+        }
+
+        public static async Task<int> UpdateAsync<TEntity>(this IDbConnection connection, TEntity entityToUpdate, IEnumerable<string> properties, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
+            {
+                return await(Task<int>)typeof(MoCRUD)
+                    .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
+                    .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
+                    .Invoke(null, new object[] { connection, entityToUpdate, properties, transaction, commandTimeout });
+            }
+
+            string sql = update(entityToUpdate, properties);
+
+            return connection.Execute(sql, entityToUpdate, transaction, commandTimeout);
         }
 
         /// <summary>

@@ -613,20 +613,28 @@ namespace Dapper
         /// <returns>The number of affected records</returns>
         public static int Update<TEntity>(this IDbConnection connection, TEntity entityToUpdate, IEnumerable<string> properties, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            var currenttype = typeof(TEntity);
-            if (currenttype.IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
+            if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
                 return (int)typeof(MoCRUD)
                     .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
                     .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                     .Invoke(null, new object[] { connection, entityToUpdate, properties, transaction, commandTimeout });
             }
-            var masterSb = new StringBuilder();
+
+            string sql = update(entityToUpdate, properties);
+
+            return connection.Execute(sql, entityToUpdate, transaction, commandTimeout);
+        }
+
+        private static string update<TEntity>(TEntity entityToUpdate, IEnumerable<string> properties)
+        {
+            var currenttype = typeof(TEntity);
+            var sb = new StringBuilder();
 
             var propertyfilter = properties.ToList();
             propertyfilter.Sort();
 
-            StringBuilderCache(masterSb, $"{currenttype.FullName}_{string.Join("_", propertyfilter)}_Update", sb =>
+            StringBuilderCache(sb, $"{currenttype.FullName}_{string.Join("_", propertyfilter)}_Update", tmpSb =>
             {
                 var idProps = GetIdProperties(entityToUpdate).ToList();
 
@@ -635,9 +643,9 @@ namespace Dapper
 
                 var name = GetTableName(entityToUpdate);
 
-                sb.AppendFormat("update {0}", name);
+                tmpSb.AppendFormat("update {0}", name);
 
-                sb.AppendFormat(" set ");
+                tmpSb.AppendFormat(" set ");
                 var nonIdProps = GetUpdateableProperties(entityToUpdate).ToArray();
 
                 for (var i = 0; i < nonIdProps.Length; i++)
@@ -646,20 +654,22 @@ namespace Dapper
 
                     if (propertyfilter.Contains(property.Name))
                     {
-                        sb.AppendFormat($"{GetColumnName(property)} = {_paramPrefix}{property.Name}");
+                        tmpSb.AppendFormat($"{GetColumnName(property)} = {_paramPrefix}{property.Name}");
                         if (i < nonIdProps.Length - 1)
-                            sb.AppendFormat(", ");
+                            tmpSb.AppendFormat(", ");
                     }
                 }
 
-                sb.Append(" where ");
-                BuildWhere<TEntity>(sb, idProps, entityToUpdate);
+                tmpSb.Append(" where ");
+                BuildWhere<TEntity>(tmpSb, idProps, entityToUpdate);
             });
 
-            if (Debugger.IsAttached) { Trace.WriteLine($"Update: {masterSb}"); }
-            if (_logger != null) { _logger.LogTrace($"Update: {masterSb}"); }
+            var sql = sb.ToString();
 
-            return connection.Execute(masterSb.ToString(), entityToUpdate, transaction, commandTimeout);
+            if (Debugger.IsAttached) { Trace.WriteLine($"Update: {sql}"); }
+            if (_logger != null) { _logger.LogTrace($"Update: {sql}"); }
+
+            return sql;
         }
 
 
