@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Transactions;
@@ -648,17 +649,22 @@ namespace Dapper
                 tmpSb.AppendFormat(" set ");
                 var nonIdProps = GetUpdateableProperties(entityToUpdate).ToArray();
 
+                var setList = new List<string>();
                 for (var i = 0; i < nonIdProps.Length; i++)
                 {
                     var property = nonIdProps[i];
 
                     if (propertyfilter.Contains(property.Name))
                     {
-                        tmpSb.AppendFormat($"{GetColumnName(property)} = {_paramPrefix}{property.Name}");
-                        if (i < nonIdProps.Length - 1)
-                            tmpSb.AppendFormat(", ");
+                        setList.Add($"{GetColumnName(property)} = {_paramPrefix}{property.Name}");
+
+                        //tmpSb.AppendFormat($"{GetColumnName(property)} = {_paramPrefix}{property.Name}");
+                        //if (i < nonIdProps.Length - 1)
+                        //    tmpSb.AppendFormat(", ");
                     }
                 }
+
+                tmpSb.Append(string.Join(",", setList));
 
                 tmpSb.Append(" where ");
                 BuildWhere<TEntity>(tmpSb, idProps, entityToUpdate);
