@@ -5,11 +5,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
-using System.Transactions;
-using static Dapper.SqlMapper;
 
 namespace Dapper
 {
