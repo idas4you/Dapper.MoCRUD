@@ -216,8 +216,10 @@ namespace Dapper
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method : https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
+                var test = typeof(MoCRUD).GetMethods().Where(methodInfo => methodInfo.Name == nameof(UpdateAsync) && methodInfo.GetGenericArguments().Count() == 1).ToList();
+
                 return await(Task<int>)typeof(MoCRUD)
-                   .GetMethods().Where(methodInfo => methodInfo.Name == nameof(UpdateAsync) && methodInfo.GetGenericArguments().Count() == 1).Single()
+                   .GetMethods().Where(methodInfo => methodInfo.Name == nameof(UpdateAsync) && methodInfo.GetGenericArguments().Count() == 1 && methodInfo.GetParameters().Length == 5).Single()
                    .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                    .Invoke(null, new object[] { connection, entityToUpdate, transaction, commandTimeout, token });
             }
@@ -227,7 +229,7 @@ namespace Dapper
             return await connection.ExecuteAsync(new CommandDefinition(sql, entityToUpdate, transaction, commandTimeout, cancellationToken: cancelToken));
         }
 
-        public static async Task<int> UpdateAsync<TEntity>(this IDbConnection connection, TEntity entityToUpdate, IEnumerable<string> properties, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<int> UpdateAsync<TEntity>(this IDbConnection connection, TEntity entityToUpdate, IEnumerable<string> properties, IDbTransaction transaction = null, int? commandTimeout = null, System.Threading.CancellationToken? token = null)
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {

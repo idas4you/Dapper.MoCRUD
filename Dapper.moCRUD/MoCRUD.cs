@@ -555,7 +555,7 @@ namespace Dapper
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
                 return (int)typeof(MoCRUD)
-                    .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
+                    .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1 && methodInfo.GetParameters().Length == 4).Single()
                     .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                     .Invoke(null, new object[] { connection, entityToUpdate, transaction, commandTimeout });
             }

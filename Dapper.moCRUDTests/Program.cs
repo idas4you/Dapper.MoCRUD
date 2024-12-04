@@ -20,9 +20,9 @@ namespace Dapper.MoCRUDTests
             //Setup();
             //RunTests();
 
-            // SqLite
-            //SetupSqLite();
-            //RunTestsSqLite();
+            //SqLite
+            SetupSqLite();
+            RunTestsSqLite();
 
             //PostgreSQL tests assume port 5432 with username postgres and password postgrespass
             //they are commented out by default since postgres setup is required to run tests
@@ -30,9 +30,9 @@ namespace Dapper.MoCRUDTests
             //RunTestsPg();   
 
             //MySQL tests assume port 3306 with username admin and password admin
-            //they are commented out by default since mysql setup is required to run tests
-            SetupMySQL();
-            RunTestsMySQL();
+            ////they are commented out by default since mysql setup is required to run tests
+            //SetupMySQL();
+            //RunTestsMySQL();
 
             //DB2 tests assume port 50000 with username db2admin and password db2admin
             //they are commented out by default since db2 setup is required to run tests
