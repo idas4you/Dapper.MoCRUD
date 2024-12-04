@@ -7,6 +7,8 @@ Dapper.MoCRUD - simple CRUD helpers for Dapper
 
 ## Features
 
+This is a fork of original Dapper.SimpleCRUD by idas4you
+
 Dapper.MoCRUD is a [single file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUD.cs) you can drop in to your project that will extend your IDbConnection interface. (If you want dynamic support, you need an [additional file](https://github.com/idas4you/Dapper.MoCRUD/blob/master/Dapper.MoCRUD/MoCRUDAsync.cs).)
 
 Who wants to write basic read/insert/update/delete statements? 
