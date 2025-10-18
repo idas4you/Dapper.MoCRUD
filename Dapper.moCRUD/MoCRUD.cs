@@ -344,18 +344,6 @@ namespace Dapper
             return sql;
         }
 
-        /// <summary>
-        /// <para>By default queries the table matching the class name</para>
-        /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
-        /// <para>Returns a list of all entities</para>
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="connection"></param>
-        /// <returns>Gets a list of all entities</returns>
-        public static IEnumerable<T> GetList<T>(this IDbConnection connection)
-        {
-            return connection.GetList<T>(new { });
-        }
 
         /// <summary>
         /// <para>By default queries the table matching the class name</para>
