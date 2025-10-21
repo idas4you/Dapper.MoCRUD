@@ -22,7 +22,6 @@
 
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\..\giveaway\src\Dapper.MoCRUD\Dapper.MoCRUD.Attributes\Dapper.MoCRUD.Attributes.csproj" />
 		<ProjectReference Include="..\Dapper.MoCRUD.Attributes\Dapper.MoCRUD.Attributes.csproj" />
 	</ItemGroup>
 
