@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>1.0.8</Version>
+		<TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+		<PackageProjectUrl>https://github.com/idas4you/Dapper.moCRUD</PackageProjectUrl>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Copyright></Copyright>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+		<AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
+	</PropertyGroup>
+
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="Dapper" Version="2.1.66" />
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\giveaway\src\Dapper.MoCRUD\Dapper.MoCRUD.Attributes\Dapper.MoCRUD.Attributes.csproj" />
+		<ProjectReference Include="..\Dapper.MoCRUD.Attributes\Dapper.MoCRUD.Attributes.csproj" />
+	</ItemGroup>
+
+	<PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
+		<DefineConstants>NETCORE;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
+	</PropertyGroup>
+
+
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+		<DocumentationFile>bin\Release\netstandard2.0\Dapper.SimpleCRUD.xml</DocumentationFile>
+	</PropertyGroup>
+
+
+</Project>
