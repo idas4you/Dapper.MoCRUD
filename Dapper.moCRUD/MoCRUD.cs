@@ -9,15 +9,15 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Dapper
+namespace Dapper.Mo
 {
     /// <summary>
     /// Main class for Dapper.SimpleCRUD extensions
     /// </summary>
-    public static partial class MoCRUD
+    public static partial class CRUD
     {
 
-        static MoCRUD()
+        static CRUD()
         {
             SetDialect(_dialect);
         }
@@ -446,7 +446,7 @@ namespace Dapper
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method : https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
-                return (TKey)typeof(MoCRUD)
+                return (TKey)typeof(CRUD)
                     .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Insert) && methodInfo.GetGenericArguments().Count() == 2).Single()
                     .MakeGenericMethod(new Type[] { typeof(TKey), entityToInsert.GetType() })
                     .Invoke(null, new object[] { connection, entityToInsert, transaction, commandTimeout });
@@ -543,7 +543,7 @@ namespace Dapper
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
-                return (int)typeof(MoCRUD)
+                return (int)typeof(CRUD)
                     .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1 && methodInfo.GetParameters().Length == 4).Single()
                     .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                     .Invoke(null, new object[] { connection, entityToUpdate, transaction, commandTimeout });
@@ -602,7 +602,7 @@ namespace Dapper
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
-                return (int)typeof(MoCRUD)
+                return (int)typeof(CRUD)
                     .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
                     .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                     .Invoke(null, new object[] { connection, entityToUpdate, properties, transaction, commandTimeout });

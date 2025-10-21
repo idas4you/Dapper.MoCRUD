@@ -8,12 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 using static Dapper.SqlMapper;
 
-namespace Dapper
+namespace Dapper.Mo
 {
     /// <summary>
     /// Main class for Dapper.SimpleCRUD extensions
     /// </summary>
-    public static partial class MoCRUD
+    public static partial class CRUD
     {
         /// <summary>
         /// <para>By default queries the table matching the class name asynchronously </para>
@@ -177,7 +177,7 @@ namespace Dapper
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method : https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
-                return await (Task<TKey>)typeof(MoCRUD)
+                return await (Task<TKey>)typeof(CRUD)
                     .GetMethods().Where(methodInfo => methodInfo.Name == nameof(InsertAsync) && methodInfo.GetGenericArguments().Count() == 2).Single()
                     .MakeGenericMethod(new Type[] { typeof(TKey), entityToInsert.GetType() })
                     .Invoke(null, new object[] { connection, entityToInsert, transaction, commandTimeout });
@@ -216,9 +216,9 @@ namespace Dapper
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method : https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
-                var test = typeof(MoCRUD).GetMethods().Where(methodInfo => methodInfo.Name == nameof(UpdateAsync) && methodInfo.GetGenericArguments().Count() == 1).ToList();
+                var test = typeof(CRUD).GetMethods().Where(methodInfo => methodInfo.Name == nameof(UpdateAsync) && methodInfo.GetGenericArguments().Count() == 1).ToList();
 
-                return await(Task<int>)typeof(MoCRUD)
+                return await(Task<int>)typeof(CRUD)
                    .GetMethods().Where(methodInfo => methodInfo.Name == nameof(UpdateAsync) && methodInfo.GetGenericArguments().Count() == 1 && methodInfo.GetParameters().Length == 5).Single()
                    .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                    .Invoke(null, new object[] { connection, entityToUpdate, transaction, commandTimeout, token });
@@ -233,7 +233,7 @@ namespace Dapper
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
-                return await(Task<int>)typeof(MoCRUD)
+                return await(Task<int>)typeof(CRUD)
                     .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
                     .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                     .Invoke(null, new object[] { connection, entityToUpdate, properties, transaction, commandTimeout });
