@@ -113,6 +113,13 @@ namespace Dapper.Mo
                     _getIdentitySql = string.Format("SELECT CAST(IDENTITY_VAL_LOCAL() AS DEC(31,0)) AS \"id\" FROM SYSIBM.SYSDUMMY1");
                     _getPagedListSql = "Select * from (Select {SelectColumns}, row_number() over(order by {OrderBy}) as PagedNumber from {TableName} {WhereClause} Order By {OrderBy}) as t where t.PagedNumber between (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
                     break;
+                case Dialect.SQLServer2012:
+                    _dialect = Dialect.SQLServer2012;
+                    _paramPrefix = "@";
+                    _encapsulation = "[{0}]";
+                    _getIdentitySql = string.Format("SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS [id]");
+                    _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} OFFSET {Offset} ROWS FETCH NEXT {RowsPerPage} ROWS ONLY";
+                    break;
                 default:
                     _dialect = Dialect.SQLServer;
                     _paramPrefix = "@";
@@ -1232,6 +1239,7 @@ namespace Dapper.Mo
         public enum Dialect
         {
             SQLServer,
+            SQLServer2012,
             PostgreSQL,
             SQLite,
             MySQL,
