@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -194,10 +194,9 @@ namespace Dapper.Mo
                 return (TKey)idProps.First().GetValue(entityToInsert, null);
             }
 
-            var r = await connection.QueryAsync(sql, entityToInsert, transaction, commandTimeout);
-            return (TKey)r.First().id;
+            return await connection.ExecuteScalarAsync<TKey>(sql, entityToInsert, transaction, commandTimeout);
         }
-        
+
         /// <summary>
         ///  <para>Updates a record or records in the database asynchronously</para>
         ///  <para>By default updates records in the table matching the class name</para>
@@ -218,7 +217,7 @@ namespace Dapper.Mo
             {
                 var test = typeof(CRUD).GetMethods().Where(methodInfo => methodInfo.Name == nameof(UpdateAsync) && methodInfo.GetGenericArguments().Count() == 1).ToList();
 
-                return await(Task<int>)typeof(CRUD)
+                return await (Task<int>)typeof(CRUD)
                    .GetMethods().Where(methodInfo => methodInfo.Name == nameof(UpdateAsync) && methodInfo.GetGenericArguments().Count() == 1 && methodInfo.GetParameters().Length == 5).Single()
                    .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                    .Invoke(null, new object[] { connection, entityToUpdate, transaction, commandTimeout, token });
@@ -233,7 +232,7 @@ namespace Dapper.Mo
         {
             if (typeof(TEntity).IsInterface) //FallBack to BaseType Generic Method: https://stackoverflow.com/questions/4101784/calling-a-generic-method-with-a-dynamic-type
             {
-                return await(Task<int>)typeof(CRUD)
+                return await (Task<int>)typeof(CRUD)
                     .GetMethods().Where(methodInfo => methodInfo.Name == nameof(Update) && methodInfo.GetGenericArguments().Count() == 1).Single()
                     .MakeGenericMethod(new Type[] { entityToUpdate.GetType() })
                     .Invoke(null, new object[] { connection, entityToUpdate, properties, transaction, commandTimeout });

@@ -1,4 +1,4 @@
-﻿using Dapper.Mo.Attributes;
+using Dapper.Mo.Attributes;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -763,7 +763,9 @@ namespace Dapper.Mo
 
             dynParms = new DynamicParameters();
             if (idProps.Count == 1)
+            {
                 dynParms.Add(_paramPrefix + idProps.First().Name, id);
+            }
             else
             {
                 foreach (var prop in idProps)
@@ -1203,6 +1205,23 @@ namespace Dapper.Mo
             if (ColumnNames.TryGetValue(key, out columnName))
                 return columnName;
 
+            columnName = _columnNameResolver.ResolveColumnName(propertyInfo);
+
+            ColumnNames.AddOrUpdate(key, columnName, (t, v) => columnName);
+
+            return columnName;
+        }
+
+        public static string GetColumnName(Type type, string name)
+        {
+            string columnName, key = string.Format("{0}.{1}", type, name);
+
+            if (ColumnNames.TryGetValue(key, out columnName))
+            {
+                return columnName;
+            }
+
+            PropertyInfo propertyInfo = type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
             columnName = _columnNameResolver.ResolveColumnName(propertyInfo);
 
             ColumnNames.AddOrUpdate(key, columnName, (t, v) => columnName);
