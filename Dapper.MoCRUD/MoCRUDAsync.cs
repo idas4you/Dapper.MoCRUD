@@ -133,11 +133,11 @@ namespace Dapper.Mo
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Gets a list of entities with optional exact match where conditions</returns>
-        public static Task<IEnumerable<T>> GetListPagedAsync<T>(this IDbConnection connection, int pageNumber, int rowsPerPage, string conditions = "", object parameters = null, string orderby = "", IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<IEnumerable<T>> GetListPagedAsync<T>(this IDbConnection connection, int pageNumber, int rowsPerPage, string conditions = "", object parameters = null, string orderby = "", IDbTransaction transaction = null, int? commandTimeout = null)
         {
             string query = getListPaged<T>(pageNumber, rowsPerPage, conditions, ref orderby);
 
-            return connection.QueryAsync<T>(query, parameters, transaction, commandTimeout);
+            return await connection.QueryAsync<T>(query, parameters, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -154,9 +154,9 @@ namespace Dapper.Mo
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The ID (primary key) of the newly inserted record if it is identity using the int? type, otherwise null</returns>
-        public static Task<int?> InsertAsync<TEntity>(this IDbConnection connection, TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<int?> InsertAsync<TEntity>(this IDbConnection connection, TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            return InsertAsync<int?, TEntity>(connection, entityToInsert, transaction, commandTimeout);
+            return await InsertAsync<int?, TEntity>(connection, entityToInsert, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -240,7 +240,7 @@ namespace Dapper.Mo
 
             string sql = update(entityToUpdate, properties);
 
-            return connection.Execute(sql, entityToUpdate, transaction, commandTimeout);
+            return await connection.ExecuteAsync(new CommandDefinition(sql, entityToUpdate, transaction, commandTimeout));
         }
 
         /// <summary>
